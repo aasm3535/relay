@@ -41,7 +41,7 @@ func run(ctx context.Context, cfg RunConfig) error {
 	}
 
 	cmd.Dir = cfg.RepoPath
-	cmd.Env = stripEnv("CLAUDECODE") // unset so nested session check doesn't trigger
+	cmd.Env = stripEnv("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID")
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -72,14 +72,21 @@ func run(ctx context.Context, cfg RunConfig) error {
 	return cmd.Wait()
 }
 
-// stripEnv returns os.Environ() with the given key removed (case-insensitive).
-// This is needed to unset CLAUDECODE so claude CLI can run inside Claude Code.
-func stripEnv(key string) []string {
+// stripEnv returns os.Environ() with the given keys removed (case-insensitive).
+// Strips CLAUDECODE + related vars so claude CLI can run inside Claude Code.
+func stripEnv(keys ...string) []string {
 	env := os.Environ()
 	out := make([]string, 0, len(env))
 	for _, e := range env {
 		k := strings.SplitN(e, "=", 2)[0]
-		if !strings.EqualFold(k, key) {
+		blocked := false
+		for _, key := range keys {
+			if strings.EqualFold(k, key) {
+				blocked = true
+				break
+			}
+		}
+		if !blocked {
 			out = append(out, e)
 		}
 	}
