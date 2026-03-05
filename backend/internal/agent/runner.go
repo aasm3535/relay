@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -38,6 +39,7 @@ func run(ctx context.Context, cfg RunConfig) error {
 	}
 
 	cmd.Dir = cfg.RepoPath
+	cmd.Env = cleanEnv()
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -54,8 +56,7 @@ func run(ctx context.Context, cfg RunConfig) error {
 
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
-		line := scanner.Text() + "\n"
-		cfg.OnOutput(line)
+		cfg.OnOutput(scanner.Text() + "\n")
 	}
 
 	errScanner := bufio.NewScanner(stderr)
@@ -64,6 +65,19 @@ func run(ctx context.Context, cfg RunConfig) error {
 	}
 
 	return cmd.Wait()
+}
+
+// cleanEnv returns os.Environ() without CLAUDECODE so that
+// claude CLI can be launched from inside a Claude Code session.
+func cleanEnv() []string {
+	env := os.Environ()
+	out := make([]string, 0, len(env))
+	for _, e := range env {
+		if !strings.HasPrefix(e, "CLAUDECODE=") {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 func buildPrompt(cfg RunConfig) string {

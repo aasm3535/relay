@@ -122,7 +122,7 @@ export function Dashboard() {
                   <div className="col-header">
                     <span className="col-title">{col.label}</span>
                     <span className="col-count">{colTasks.length}</span>
-                    <div className="col-strip" />
+                    <div className="col-accent" />
                   </div>
                   <div className="col-body">
                     {colTasks.length === 0 ? (
