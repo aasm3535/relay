@@ -1,0 +1,15 @@
+{
+  "name": "relay",
+  "private": true,
+  "scripts": {
+    "dev":        "npm run dev:back & npm run dev:front",
+    "dev:full":   "npm run dev:back & npm run dev:front",
+    "dev:front":  "npm --prefix frontend run dev",
+    "dev:back":   "cd backend && go run main.go",
+    "build":      "npm run build:front && npm run build:back",
+    "build:front":"npm --prefix frontend run build",
+    "build:back": "cd backend && go build -o ../bin/relay .",
+    "test:front": "npm --prefix frontend run build",
+    "test:back":  "cd backend && go vet ./... && go build ./..."
+  }
+}
