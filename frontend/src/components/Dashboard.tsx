@@ -1,9 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStore } from '../store'
 import { TaskCard } from './TaskCard'
 import { TaskDetail } from './TaskDetail'
 import { NewTaskModal } from './NewTaskModal'
 import type { TaskStatus } from '../types'
+
+function RelayLogo() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 7h9M3 7l3-3M3 7l3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M17 13H8M17 13l-3-3M17 13l-3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function SunIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+    </svg>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  )
+}
 
 const COLUMNS: { status: TaskStatus; label: string }[] = [
   { status: 'pending', label: 'Pending' },
@@ -15,6 +40,16 @@ const COLUMNS: { status: TaskStatus; label: string }[] = [
 export function Dashboard() {
   const { tasks, connected, selectedTaskId, selectTask } = useStore()
   const [showModal, setShowModal] = useState(false)
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('relay-theme') as 'dark' | 'light') ?? 'dark'
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('relay-theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
 
   const selectedTask = tasks.find(t => t.id === selectedTaskId) ?? null
   const drawerOpen = selectedTask !== null
@@ -32,7 +67,7 @@ export function Dashboard() {
       {/* Navbar */}
       <nav className="navbar">
         <div className="nav-logo">
-          <div className="nav-logo-mark">R</div>
+          <RelayLogo />
           Relay
         </div>
         <div className="nav-divider" />
@@ -60,6 +95,9 @@ export function Dashboard() {
             + New Task
           </button>
         </div>
+        <button className="btn-theme" onClick={toggleTheme} title="Toggle theme">
+          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+        </button>
       </nav>
 
       {/* Board */}
