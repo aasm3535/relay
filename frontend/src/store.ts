@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import type { Task, WSMessage } from './types'
 
-const API = 'http://localhost:8080'
-const WS_URL = 'ws://localhost:8080/ws'
+// Use Vite proxy in dev, same-origin in prod
+const API = ''
+const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`
 
 interface RelayStore {
   tasks: Task[]
