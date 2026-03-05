@@ -31,6 +31,7 @@ func main() {
 		port = "8080"
 	}
 
+	fmt.Println("Hello!")
 	fmt.Printf("Relay backend running on http://localhost:%s\n", port)
 	if err := http.ListenAndServe(":"+port, server.Routes()); err != nil {
 		log.Fatal(err)
