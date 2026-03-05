@@ -41,10 +41,10 @@ export function NewTaskModal({ onClose }: Props) {
 
         <form className="modal-form" onSubmit={handleSubmit}>
           <label className="field">
-            <span className="field-label">Title *</span>
+            <span className="field-label">Title</span>
             <input
               className="input"
-              placeholder="Fix the login bug"
+              placeholder="Fix the login redirect bug"
               value={form.title}
               onChange={e => set('title', e.target.value)}
               autoFocus
@@ -54,16 +54,17 @@ export function NewTaskModal({ onClose }: Props) {
           <label className="field">
             <span className="field-label">Description</span>
             <textarea
-              className="input input-textarea"
-              placeholder="Optional details for the agent..."
+              className="input"
+              placeholder="Optional context for the agent…"
               value={form.description}
               onChange={e => set('description', e.target.value)}
               rows={3}
+              style={{ resize: 'vertical' }}
             />
           </label>
 
           <label className="field">
-            <span className="field-label">Repository path *</span>
+            <span className="field-label">Repository path</span>
             <input
               className="input input-mono"
               placeholder="/Users/you/projects/my-app"
@@ -91,11 +92,9 @@ export function NewTaskModal({ onClose }: Props) {
           </div>
 
           <div className="modal-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Cancel
-            </button>
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Task'}
+              {loading ? 'Creating…' : 'Create Task'}
             </button>
           </div>
         </form>

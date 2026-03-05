@@ -7,31 +7,28 @@ interface Props {
   onClick: () => void
 }
 
-const statusLabel: Record<string, string> = {
-  pending: 'Pending',
-  running: 'Running',
-  done: 'Done',
-  failed: 'Failed',
-}
-
 export function TaskCard({ task, selected, onClick }: Props) {
   return (
-    <div
-      className={clsx('task-card', selected && 'task-card-selected')}
-      onClick={onClick}
-    >
-      <div className="task-card-header">
-        <span className="task-title">{task.title}</span>
-        <span className={clsx('status-dot', `status-dot-${task.status}`)} />
-      </div>
-      <div className="task-card-meta">
-        <span className={clsx('badge', `badge-${task.status}`)}>
-          {statusLabel[task.status]}
-        </span>
+    <div className={clsx('task-card', selected && 'selected')} onClick={onClick}>
+      <div className="card-title">{task.title}</div>
+
+      <div className="card-badges">
         <span className="badge badge-agent">{task.agent}</span>
-        <span className="badge badge-mode">{task.mode}</span>
+        <span className={clsx('badge', task.mode === 'pr' ? 'badge-pr' : 'badge-auto')}>
+          {task.mode === 'pr' ? 'PR' : 'Auto'}
+        </span>
       </div>
-      <div className="task-repo">{task.repo_path}</div>
+
+      <div className="card-repo">{task.repo_path}</div>
+
+      {task.status === 'running' && (
+        <div className="card-running-indicator">
+          <span>Working</span>
+          <div className="card-running-bar">
+            <div className="card-running-bar-fill" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
