@@ -33,13 +33,15 @@ func run(ctx context.Context, cfg RunConfig) error {
 	var cmd *exec.Cmd
 	switch cfg.Agent {
 	case "codex":
-		cmd = exec.CommandContext(ctx, "codex", "--quiet", prompt)
+		// codex exec --full-auto "<prompt>"
+		cmd = exec.CommandContext(ctx, "codex", "exec", "--full-auto", prompt)
 	default: // claude
-		cmd = exec.CommandContext(ctx, "claude", "--print", prompt)
+		// claude --print --dangerously-skip-permissions "<prompt>"
+		cmd = exec.CommandContext(ctx, "claude", "--print", "--dangerously-skip-permissions", prompt)
 	}
 
 	cmd.Dir = cfg.RepoPath
-	cmd.Env = cleanEnv()
+	cmd.Env = stripEnv("CLAUDECODE") // unset so nested session check doesn't trigger
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -54,11 +56,14 @@ func run(ctx context.Context, cfg RunConfig) error {
 		return fmt.Errorf("start agent: %w", err)
 	}
 
+	// Stream stdout
 	scanner := bufio.NewScanner(stdout)
+	scanner.Buffer(make([]byte, 1024*1024), 1024*1024)
 	for scanner.Scan() {
 		cfg.OnOutput(scanner.Text() + "\n")
 	}
 
+	// Capture stderr
 	errScanner := bufio.NewScanner(stderr)
 	for errScanner.Scan() {
 		cfg.OnOutput("[stderr] " + errScanner.Text() + "\n")
@@ -67,13 +72,14 @@ func run(ctx context.Context, cfg RunConfig) error {
 	return cmd.Wait()
 }
 
-// cleanEnv returns os.Environ() without CLAUDECODE so that
-// claude CLI can be launched from inside a Claude Code session.
-func cleanEnv() []string {
+// stripEnv returns os.Environ() with the given key removed (case-insensitive).
+// This is needed to unset CLAUDECODE so claude CLI can run inside Claude Code.
+func stripEnv(key string) []string {
 	env := os.Environ()
 	out := make([]string, 0, len(env))
 	for _, e := range env {
-		if !strings.HasPrefix(e, "CLAUDECODE=") {
+		k := strings.SplitN(e, "=", 2)[0]
+		if !strings.EqualFold(k, key) {
 			out = append(out, e)
 		}
 	}
