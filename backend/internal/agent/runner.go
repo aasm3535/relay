@@ -33,15 +33,13 @@ func run(ctx context.Context, cfg RunConfig) error {
 	var cmd *exec.Cmd
 	switch cfg.Agent {
 	case "codex":
-		// codex exec --full-auto "<prompt>"
 		cmd = exec.CommandContext(ctx, "codex", "exec", "--full-auto", prompt)
 	default: // claude
-		// claude --print --dangerously-skip-permissions "<prompt>"
 		cmd = exec.CommandContext(ctx, "claude", "--print", "--dangerously-skip-permissions", prompt)
 	}
 
 	cmd.Dir = cfg.RepoPath
-	cmd.Env = stripEnv("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID")
+	cmd.Env = cleanEnv()
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -72,18 +70,39 @@ func run(ctx context.Context, cfg RunConfig) error {
 	return cmd.Wait()
 }
 
-// stripEnv returns os.Environ() with the given keys removed (case-insensitive).
-// Strips CLAUDECODE + related vars so claude CLI can run inside Claude Code.
-func stripEnv(keys ...string) []string {
+// cleanEnv returns os.Environ() with all CLI session variables removed
+// so that agent CLIs (claude, codex) can launch as fresh top-level sessions.
+func cleanEnv() []string {
+	// Prefixes that indicate a parent CLI session
+	blockedPrefixes := []string{
+		"CLAUDECODE",    // CLAUDECODE=1
+		"CLAUDE_CODE_",  // CLAUDE_CODE_ENTRYPOINT, CLAUDE_CODE_SESSION_ID, etc.
+		"CODEX_",        // Any codex session markers
+	}
+	// Exact names to block
+	blockedExact := []string{
+		"CLAUDE_CODE_ENTRYPOINT",
+	}
+
 	env := os.Environ()
 	out := make([]string, 0, len(env))
 	for _, e := range env {
 		k := strings.SplitN(e, "=", 2)[0]
+		upper := strings.ToUpper(k)
+
 		blocked := false
-		for _, key := range keys {
-			if strings.EqualFold(k, key) {
+		for _, prefix := range blockedPrefixes {
+			if strings.HasPrefix(upper, prefix) {
 				blocked = true
 				break
+			}
+		}
+		if !blocked {
+			for _, exact := range blockedExact {
+				if strings.EqualFold(k, exact) {
+					blocked = true
+					break
+				}
 			}
 		}
 		if !blocked {

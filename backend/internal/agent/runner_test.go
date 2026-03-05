@@ -6,29 +6,40 @@ import (
 	"testing"
 )
 
-func TestStripEnv_RemovesClaudeCode(t *testing.T) {
-	// Simulate env with CLAUDECODE set (like inside Claude Code session)
+func TestCleanEnv_RemovesClaudeCode(t *testing.T) {
 	t.Setenv("CLAUDECODE", "1")
 	t.Setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
+	t.Setenv("CLAUDE_CODE_SESSION_ID", "abc123")
 
-	result := stripEnv("CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SESSION_ID")
+	result := cleanEnv()
 
 	for _, e := range result {
 		k := strings.SplitN(e, "=", 2)[0]
-		if strings.EqualFold(k, "CLAUDECODE") {
-			t.Errorf("CLAUDECODE still present: %s", e)
-		}
-		if strings.EqualFold(k, "CLAUDE_CODE_ENTRYPOINT") {
-			t.Errorf("CLAUDE_CODE_ENTRYPOINT still present: %s", e)
+		upper := strings.ToUpper(k)
+		if upper == "CLAUDECODE" || strings.HasPrefix(upper, "CLAUDE_CODE_") {
+			t.Errorf("should be stripped but still present: %s", k)
 		}
 	}
 
-	t.Logf("OK: stripped env has %d vars (original had %d)", len(result), len(os.Environ()))
+	t.Logf("OK: cleaned env has %d vars (original had %d)", len(result), len(os.Environ()))
 }
 
-func TestStripEnv_KeepsOtherVars(t *testing.T) {
+func TestCleanEnv_RemovesCodex(t *testing.T) {
+	t.Setenv("CODEX_SESSION", "1")
+
+	result := cleanEnv()
+
+	for _, e := range result {
+		k := strings.SplitN(e, "=", 2)[0]
+		if strings.HasPrefix(strings.ToUpper(k), "CODEX_") {
+			t.Errorf("should be stripped but still present: %s", k)
+		}
+	}
+}
+
+func TestCleanEnv_KeepsOtherVars(t *testing.T) {
 	t.Setenv("PATH", os.Getenv("PATH"))
-	result := stripEnv("CLAUDECODE")
+	result := cleanEnv()
 
 	hasPath := false
 	for _, e := range result {
